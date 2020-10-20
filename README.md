@@ -1,4 +1,3 @@
-This is my first public open source project. Enjoy!
 
 [Reservoirs with Ecological Value in Israel](https://est987.github.io/Ecological%20Reservoirs%20Israel%20-%20webmap/index.html)
 
