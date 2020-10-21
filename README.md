@@ -1,5 +1,3 @@
-[Ecological Corridors in Israel](https://est987.github.io/EcologicalCorridorsIL/GeneralWebMapOpenLayers/index.html)
-
 [Reservoirs with Ecological Value in Israel](https://est987.github.io/Ecological%20Reservoirs%20Israel%20-%20webmap/index.html)
 
 [Bike Accident in Israel Map](https://est987.github.io/BikeAccidents/webmap/index.html)
