@@ -1,0 +1,58 @@
+{
+  "LAYERS": [
+    {
+      "geomType": 0,
+      "layerId": "dem_clip_4dfd48fe_aa2b_4c43_9d49_ac43d58db162",
+      "name": "dem_clip",
+      "properties": {
+        "checkBox_Clip": false,
+        "checkBox_Frame": false,
+        "checkBox_Shading": true,
+        "checkBox_Sides": true,
+        "checkBox_Surroundings": false,
+        "checkBox_TransparentBackground": false,
+        "checkBox_Visible": true,
+        "colorButton_Color": "0x000000",
+        "comboBox_ClipLayer": "extent_96e62880_18e9_42df_8d56_e7b8c921dc68",
+        "comboBox_TextureSize": 100,
+        "horizontalSlider_DEMSize": 2,
+        "lineEdit_ImageFile": "",
+        "radioButton_MapCanvas": true,
+        "spinBox_Opacity": 100,
+        "spinBox_Roughening": 1,
+        "spinBox_Size": 3,
+        "toolButton_SideColor": "0xccbbaa"
+      },
+      "visible": true
+    },
+    {
+      "geomType": 0,
+      "layerId": "dem_clip_c9adbfc9_9253_461b_b083_206e3659f167",
+      "name": "hillshade",
+      "properties": {},
+      "visible": false
+    },
+    {
+      "geomType": 3,
+      "layerId": "extent_96e62880_18e9_42df_8d56_e7b8c921dc68",
+      "name": "extent",
+      "properties": {},
+      "visible": false
+    },
+    {
+      "geomType": 0,
+      "layerId": "FLAT",
+      "name": "Flat Plane",
+      "properties": {},
+      "visible": false
+    }
+  ],
+  "SCENE": {
+    "checkBox_autoZShift": false,
+    "colorButton_Color": "0x000000",
+    "comboBox_MaterialType": 0,
+    "lineEdit_BaseSize": "100",
+    "lineEdit_zFactor": "5",
+    "lineEdit_zShift": "0"
+  }
+}
