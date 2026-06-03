@@ -235,7 +235,7 @@
     <div class="logo">
       <div class="logo-icon">🌊</div>
       <div class="logo-text">
-        <h1>נהר הירקון — ניטור איכות מים</h1>
+        <h1>רשות נחל הירקון — ניטור איכות מים</h1>
         <p>Yarkon River Water Quality Monitoring</p>
       </div>
     </div>
@@ -257,7 +257,7 @@
       </div>
       <div class="date-tab" data-date="2026-02-22">
         <span class="dt-label">22/02/2026</span>
-        <span class="dt-sub">סיור מלא לאורך הנהר</span>
+        <span class="dt-sub">סיור מלא לאורך הנחל</span>
         <span class="dt-badge">📍 13 תחנות · 13 פרמטרים</span>
       </div>
       <div class="date-tab" data-date="2026-02-24">
@@ -315,7 +315,7 @@ const DATA = {"stations":[{"Station":"גשר הרכבת","Distance_km":0.554,"Or
 
 const PARAM_UNITS = {"BOD":"mg/L","COD":"mg/L","E_COLI_WATER":"cfu/100mL","ENTEROCOCCUS_WATER":"cfu/100mL","NH3_AS_N":"mg/L","NH4_AS_N":"mg/L","NO2_AS_N":"mg/L","NO2-N":"mg/L","NO3_NAS_AS_N":"mg/L","TSS_105C":"mg/L","TSS_550C":"mg/L","pH":"pH","EC":"µS/cm","DO_sat":"%","Temperature":"°C"};
 const PARAM_DESC = {"BOD":"ביקוש ביוכימי לחמצן","COD":"ביקוש כימי לחמצן","E_COLI_WATER":"חיידקי E. coli","ENTEROCOCCUS_WATER":"אנטרוקוקוס","NH3_AS_N":"אמוניה (NH₃-N)","NH4_AS_N":"אמוניום (NH₄-N)","NO2_AS_N":"ניטריט (NO₂-N)","NO2-N":"ניטריט — שדה","NO3_NAS_AS_N":"ניטראט (NO₃-N)","TSS_105C":"מוצקים מרחפים 105°C","TSS_550C":"מוצקים אורגניים 550°C","pH":"חומציות","EC":"מוליכות חשמלית","DO_sat":"רוויית חמצן מומס","Temperature":"טמפרטורה"};
-const DATE_INFO = {"all":"מציג ממוצע על פני שני תאריכי הדיגום — 22 ו-24 בפברואר 2026","2026-02-22":"סיור מלא: 13 תחנות לאורך כל הנהר, 13 פרמטרים — 22 בפברואר 2026","2026-02-24":"דיגום חוזר של תחנת בני ברק בלבד, 9 פרמטרים — 24 בפברואר 2026"};
+const DATE_INFO = {"all":"מציג ממוצע על פני שני תאריכי הדיגום — 22 ו-24 בפברואר 2026","2026-02-22":"סיור מלא: 13 תחנות לאורך כל הנחל, 13 פרמטרים — 22 בפברואר 2026","2026-02-24":"דיגום חוזר של תחנת בני ברק בלבד, 9 פרמטרים — 24 בפברואר 2026"};
 const DATE_PILL = {"all":"כל הנתונים · ממוצע","2026-02-22":"22/02/2026","2026-02-24":"24/02/2026"};
 
 let activeDate  = 'all';
@@ -515,7 +515,7 @@ function drawStats(pts,unit){
 function drawList(pts,unit){
   const list=document.getElementById('stations-list');
   const availCount=pts.length;
-  list.innerHTML=`<div class="list-header"><span>תחנות לאורך הנהר</span><span style="color:var(--accent)">${availCount} תחנות עם נתונים</span></div>`;
+  list.innerHTML=`<div class="list-header"><span>תחנות לאורך הנחל</span><span style="color:var(--accent)">${availCount} תחנות עם נתונים</span></div>`;
 
   if(!pts.length){
     list.innerHTML+=`<div class="no-data">אין נתונים לפרמטר זה בתאריך הנבחר</div>`;
