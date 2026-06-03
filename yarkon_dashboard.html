@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>נהר הירקון — ניטור איכות מים</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00c4a7;
+    --accent2: #0088ff;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Heebo', sans-serif;
+    min-height: 100vh;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse 80% 40% at 50% 100%, rgba(14,165,233,.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 30% at 20% 50%, rgba(0,196,167,.04) 0%, transparent 50%);
+    pointer-events:none; z-index:0;
+  }
+  .container { max-width:1280px; margin:0 auto; padding:0 24px; position:relative; z-index:1; }
+
+  /* HEADER */
+  header {
+    padding:24px 0 16px;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-icon {
+    width:42px; height:42px;
+    background:linear-gradient(135deg,#0ea5e9,#00c4a7);
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px;
+  }
+  .logo-text h1 { font-size:18px; font-weight:700; color:#fff; }
+  .logo-text p  { font-size:11px; color:var(--muted); direction:ltr; }
+  .header-meta  { margin-right:auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .badge {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:20px; padding:4px 10px;
+    font-size:11px; color:var(--muted);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .badge span { color:var(--accent); }
+
+  /* ── DATE SELECTOR ── */
+  .date-section { padding:20px 0 0; }
+  .section-label {
+    font-size:11px; font-weight:600; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--muted); margin-bottom:10px;
+  }
+  .date-tabs {
+    display:flex; gap:8px; flex-wrap:wrap; align-items:stretch;
+  }
+  .date-tab {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 18px;
+    cursor:pointer;
+    transition:all .18s ease;
+    display:flex; flex-direction:column; gap:2px;
+    min-width:160px;
+    text-align:right;
+  }
+  .date-tab:hover { border-color:var(--accent2); background:var(--surface2); }
+  .date-tab.active {
+    border-color:var(--accent);
+    background:linear-gradient(135deg, rgba(0,196,167,.13), rgba(0,136,255,.1));
+  }
+  .date-tab .dt-label {
+    font-size:13px; font-weight:700; color:#fff;
+    font-family:'JetBrains Mono',monospace; direction:ltr;
+  }
+  .date-tab .dt-sub { font-size:11px; color:var(--muted); }
+  .date-tab.active .dt-label { color:var(--accent); }
+  .date-tab .dt-badge {
+    margin-top:4px;
+    display:inline-flex; align-items:center; gap:4px;
+    background:rgba(255,255,255,.06); border-radius:4px;
+    padding:2px 6px; font-size:10px; color:var(--muted);
+    width:fit-content;
+  }
+  .date-tab.active .dt-badge { background:rgba(0,196,167,.12); color:var(--accent); }
+  .date-info-bar {
+    margin-top:10px;
+    padding:8px 14px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:12px; color:var(--muted);
+    display:flex; align-items:center; gap:8px;
+  }
+  .date-info-bar .info-icon { font-size:14px; }
+
+  /* PARAM PICKER */
+  .picker-section { padding:18px 0 0; }
+  .param-grid { display:flex; flex-wrap:wrap; gap:7px; }
+  .param-btn {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:7px 14px;
+    color:var(--muted); font-family:'Heebo',sans-serif;
+    font-size:12px; font-weight:500; cursor:pointer;
+    transition:all .15s ease;
+    display:flex; align-items:center; gap:6px; direction:ltr;
+  }
+  .param-btn:hover { border-color:var(--accent); color:var(--text); background:var(--surface2); }
+  .param-btn.active {
+    background:linear-gradient(135deg,rgba(0,196,167,.15),rgba(0,136,255,.15));
+    border-color:var(--accent); color:#fff;
+  }
+  .param-btn.unavailable { opacity:.35; cursor:not-allowed; }
+  .param-btn .unit {
+    font-size:10px; font-family:'JetBrains Mono',monospace;
+    color:var(--muted); background:rgba(255,255,255,.05);
+    padding:1px 5px; border-radius:4px;
+  }
+  .param-btn.active .unit { color:var(--accent); }
+
+  /* CHART AREA */
+  .chart-section {
+    margin-top:20px;
+    display:grid; grid-template-columns:1fr 270px; gap:16px; align-items:start;
+  }
+  .chart-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:22px; position:relative; overflow:hidden;
+  }
+  .chart-card::after {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    border-radius:16px 16px 0 0;
+  }
+  .chart-header { display:flex; align-items:baseline; gap:10px; margin-bottom:4px; flex-wrap:wrap; }
+  .chart-title  { font-size:20px; font-weight:700; color:#fff; letter-spacing:-.5px; direction:ltr; }
+  .chart-unit   {
+    font-family:'JetBrains Mono',monospace; font-size:12px;
+    color:var(--accent); background:rgba(0,196,167,.1);
+    padding:2px 8px; border-radius:6px; direction:ltr;
+  }
+  .chart-meta { display:flex; align-items:center; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .chart-subtitle { font-size:12px; color:var(--muted); }
+  .chart-date-pill {
+    font-size:10px; font-family:'JetBrains Mono',monospace;
+    background:rgba(0,136,255,.12); border:1px solid rgba(0,136,255,.25);
+    color:#5bb3ff; padding:2px 8px; border-radius:12px; direction:ltr;
+  }
+
+  svg#river-chart { width:100%; height:300px; overflow:visible; }
+  .river-line { fill:none; stroke:url(#lineGrad); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+  .area-fill  { fill:url(#areaGrad); }
+  .station-dot { fill:var(--surface); stroke-width:2.5; cursor:pointer; }
+  .grid-line  { stroke:var(--border); stroke-width:1; }
+  .axis-label { font-family:'JetBrains Mono',monospace; font-size:10px; fill:var(--muted); }
+  .station-label { font-family:'Heebo',sans-serif; font-size:10px; fill:var(--muted); }
+
+  /* TOOLTIP */
+  .tooltip {
+    position:absolute;
+    background:var(--surface2); border:1px solid var(--accent);
+    border-radius:10px; padding:10px 14px;
+    pointer-events:none; opacity:0; transition:opacity .15s;
+    z-index:100; direction:rtl; min-width:155px;
+  }
+  .tooltip.show { opacity:1; }
+  .tt-name { font-size:12px; font-weight:700; color:#fff; margin-bottom:3px; }
+  .tt-val  { font-family:'JetBrains Mono',monospace; font-size:17px; font-weight:600; color:var(--accent); }
+  .tt-km   { font-size:11px; color:var(--muted); margin-top:2px; direction:ltr; }
+  .tt-date { font-size:10px; color:#5bb3ff; margin-top:2px; direction:ltr; }
+
+  /* STATS */
+  .stats-panel { display:flex; flex-direction:column; gap:10px; }
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:14px 16px;
+  }
+  .stat-label { font-size:10px; color:var(--muted); font-weight:600; letter-spacing:.5px; text-transform:uppercase; margin-bottom:5px; }
+  .stat-value { font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:600; color:#fff; }
+  .stat-value .unit { font-size:12px; color:var(--accent); margin-right:3px; }
+  .stat-sub  { font-size:11px; color:var(--muted); margin-top:3px; }
+  .stat-bar  { margin-top:8px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .stat-bar-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .5s ease; }
+
+  /* STATIONS LIST */
+  .stations-list { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .list-header {
+    padding:10px 16px; font-size:10px; font-weight:600;
+    letter-spacing:1px; text-transform:uppercase; color:var(--muted);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .station-row {
+    display:flex; align-items:center; padding:8px 16px;
+    border-bottom:1px solid rgba(30,45,69,.5);
+    gap:10px; transition:background .12s;
+  }
+  .station-row:last-child { border-bottom:none; }
+  .station-row:hover { background:var(--surface2); }
+  .s-order { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); width:16px; text-align:center; flex-shrink:0; }
+  .s-dot   { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .s-name  { font-size:12px; color:var(--text); flex:1; }
+  .s-km    { font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; direction:ltr; }
+  .s-val   { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:var(--accent); direction:ltr; min-width:80px; text-align:left; }
+  .s-val.high { color:var(--danger); }
+  .s-val.low  { color:var(--muted); }
+  .s-val.absent { color:#2a3a52; font-style:italic; }
+
+  .no-data { color:var(--muted); font-size:13px; padding:30px; text-align:center; direction:ltr; }
+
+  @media (max-width:900px) { .chart-section { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🌊</div>
+      <div class="logo-text">
+        <h1>נהר הירקון — ניטור איכות מים</h1>
+        <p>Yarkon River Water Quality Monitoring</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="badge"><span>13</span> תחנות</div>
+      <div class="badge"><span>15</span> פרמטרים</div>
+      <div class="badge">פברואר 2026</div>
+    </div>
+  </header>
+
+  <!-- DATE SELECTOR -->
+  <div class="date-section">
+    <div class="section-label">בחר תאריך / טווח</div>
+    <div class="date-tabs" id="date-tabs">
+      <div class="date-tab active" data-date="all">
+        <span class="dt-label">כל הנתונים</span>
+        <span class="dt-sub">ממוצע · כל התאריכים</span>
+        <span class="dt-badge">🗓 22–24/02/2026 · 13 תחנות</span>
+      </div>
+      <div class="date-tab" data-date="2026-02-22">
+        <span class="dt-label">22/02/2026</span>
+        <span class="dt-sub">סיור מלא לאורך הנהר</span>
+        <span class="dt-badge">📍 13 תחנות · 13 פרמטרים</span>
+      </div>
+      <div class="date-tab" data-date="2026-02-24">
+        <span class="dt-label">24/02/2026</span>
+        <span class="dt-sub">תחנת בדיקה בודדת</span>
+        <span class="dt-badge">📍 בני ברק בלבד · 9 פרמטרים</span>
+      </div>
+    </div>
+    <div class="date-info-bar" id="date-info-bar">
+      <span class="info-icon">ℹ️</span>
+      <span id="date-info-text">מציג ממוצע על פני שני תאריכי הדיגום — 22 ו-24 בפברואר 2026</span>
+    </div>
+  </div>
+
+  <!-- PARAM PICKER -->
+  <div class="picker-section">
+    <div class="section-label">בחר פרמטר</div>
+    <div class="param-grid" id="param-grid"></div>
+  </div>
+
+  <!-- CHART + STATS -->
+  <div class="chart-section">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title" id="chart-title">BOD</div>
+        <div class="chart-unit"  id="chart-unit">mg/L</div>
+      </div>
+      <div class="chart-meta">
+        <div class="chart-subtitle" id="chart-desc"></div>
+        <div class="chart-date-pill" id="chart-date-pill">כל הנתונים</div>
+      </div>
+      <div id="chart-svg-container" style="position:relative;">
+        <svg id="river-chart" viewBox="0 0 760 290" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="tooltip" id="tooltip">
+          <div class="tt-name" id="tt-name"></div>
+          <div class="tt-val"  id="tt-val"></div>
+          <div class="tt-km"   id="tt-km"></div>
+          <div class="tt-date" id="tt-date"></div>
+        </div>
+      </div>
+    </div>
+    <div class="stats-panel" id="stats-panel"></div>
+  </div>
+
+  <!-- STATIONS LIST -->
+  <div style="margin-top:16px; margin-bottom:40px;">
+    <div class="stations-list" id="stations-list"></div>
+  </div>
+
+</div>
+
+<script>
+// ── ALL DATA ──────────────────────────────────────────────────────────────────
+const DATA = {"stations":[{"Station":"גשר הרכבת","Distance_km":0.554,"Order":1},{"Station":"בית לאה","Distance_km":3.674,"Order":2},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Order":3},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Order":4},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Order":5},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Order":6},{"Station":"מעלה כביש 5","Distance_km":13.752,"Order":7},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Order":8},{"Station":"בני ברק","Distance_km":19.952,"Order":9},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Order":10},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Order":11},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Order":12},{"Station":"מרכז השייט","Distance_km":27.202,"Order":13}],"dates":{"2026-02-22":{"BOD":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.0},{"Station":"בית לאה","Distance_km":3.674,"Value":0.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":0.73},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":2.85},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":1.16},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":2.02},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":1.77},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":3.46},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":3.29},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":4.43},{"Station":"מרכז השייט","Distance_km":27.202,"Value":2.71}],"COD":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":48.0},{"Station":"בית לאה","Distance_km":3.674,"Value":50.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":87.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":47.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":90.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":61.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":47.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":48.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":70.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":74.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":75.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":84.0}],"DO_sat":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":64.3},{"Station":"בית לאה","Distance_km":3.674,"Value":70.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":56.1},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":75.9},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":75.3},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":73.1},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":52.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":57.1},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":23.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":44.8},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":84.9},{"Station":"מרכז השייט","Distance_km":27.202,"Value":78.8}],"EC":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":1054.0},{"Station":"בית לאה","Distance_km":3.674,"Value":1046.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":1052.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":1225.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":1190.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":1255.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":1277.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":1273.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":1284.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":1274.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":3290.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":4330.0}],"ENTEROCOCCUS_WATER":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":80.0},{"Station":"בית לאה","Distance_km":3.674,"Value":150.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":96.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":430.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":510.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":430.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":230.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":50.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":130.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":130.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":120.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":70.0}],"E_COLI_WATER":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":10.0},{"Station":"בית לאה","Distance_km":3.674,"Value":90.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":100.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":2500.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":2800.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":2400.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":1200.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":650.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":680.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":920.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":640.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":250.0}],"NH3_AS_N":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.27},{"Station":"בית לאה","Distance_km":3.674,"Value":0.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":0.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":0.55},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":0.27},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":0.27},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":0.27},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":1.51},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":0.76},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":0.62},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":0.83},{"Station":"מרכז השייט","Distance_km":27.202,"Value":0.55}],"NO2_AS_N":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.0},{"Station":"בית לאה","Distance_km":3.674,"Value":0.01},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":0.011},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":0.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":0.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":0.013},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":0.13},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":0.903},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":0.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":0.006},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":0.183},{"Station":"מרכז השייט","Distance_km":27.202,"Value":0.708}],"NO3_NAS_AS_N":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.53},{"Station":"בית לאה","Distance_km":3.674,"Value":0.51},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":0.55},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":3.65},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":2.99},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":4.42},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":3.74},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":4.19},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":5.49},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":5.77},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":6.51},{"Station":"מרכז השייט","Distance_km":27.202,"Value":6.17}],"TSS_105C":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.0},{"Station":"בית לאה","Distance_km":3.674,"Value":44.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":50.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":44.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":53.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":50.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":51.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":28.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":41.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":38.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":23.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":4.0}],"TSS_550C":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.0},{"Station":"בית לאה","Distance_km":3.674,"Value":39.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":25.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":21.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":27.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":25.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":40.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":18.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":15.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":12.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":3.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":0.0}],"Temperature":[{"Station":"בית לאה","Distance_km":3.674,"Value":22.5},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":19.4},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":18.9},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":19.2},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":19.5},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":19.5},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":19.9},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":19.2},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":18.6},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":19.8},{"Station":"מרכז השייט","Distance_km":27.202,"Value":19.5}],"pH":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":7.708},{"Station":"בית לאה","Distance_km":3.674,"Value":8.01},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":8.03},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":8.139},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":8.18},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":8.14},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":8.08},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":8.04},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":8.07},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":8.09},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":8.2},{"Station":"מרכז השייט","Distance_km":27.202,"Value":8.26}]},"2026-02-24":{"BOD":[{"Station":"בני ברק","Distance_km":19.952,"Value":4.86}],"COD":[{"Station":"בני ברק","Distance_km":19.952,"Value":0.0}],"ENTEROCOCCUS_WATER":[{"Station":"בני ברק","Distance_km":19.952,"Value":3100.0}],"E_COLI_WATER":[{"Station":"בני ברק","Distance_km":19.952,"Value":16000.0}],"NH4_AS_N":[{"Station":"בני ברק","Distance_km":19.952,"Value":1.24}],"NO2-N":[{"Station":"בני ברק","Distance_km":19.952,"Value":0.0}],"NO3_NAS_AS_N":[{"Station":"בני ברק","Distance_km":19.952,"Value":7.79}],"TSS_105C":[{"Station":"בני ברק","Distance_km":19.952,"Value":40.0}],"TSS_550C":[{"Station":"בני ברק","Distance_km":19.952,"Value":40.0}]},"all":{"BOD":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.0},{"Station":"בית לאה","Distance_km":3.674,"Value":0.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":0.73},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":2.85},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":1.16},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":2.02},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":1.77},{"Station":"בני ברק","Distance_km":19.952,"Value":4.86},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":3.46},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":3.29},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":4.43},{"Station":"מרכז השייט","Distance_km":27.202,"Value":2.71}],"COD":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":48.0},{"Station":"בית לאה","Distance_km":3.674,"Value":50.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":87.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":47.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":90.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":61.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":47.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":48.0},{"Station":"בני ברק","Distance_km":19.952,"Value":0.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":70.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":74.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":75.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":84.0}],"DO_sat":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":64.3},{"Station":"בית לאה","Distance_km":3.674,"Value":70.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":56.1},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":75.9},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":75.3},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":73.1},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":52.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":57.1},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":23.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":44.8},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":84.9},{"Station":"מרכז השייט","Distance_km":27.202,"Value":78.8}],"EC":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":1054.0},{"Station":"בית לאה","Distance_km":3.674,"Value":1046.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":1052.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":1225.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":1190.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":1255.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":1277.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":1273.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":1284.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":1274.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":3290.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":4330.0}],"ENTEROCOCCUS_WATER":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":80.0},{"Station":"בית לאה","Distance_km":3.674,"Value":150.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":96.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":430.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":510.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":430.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":230.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":50.0},{"Station":"בני ברק","Distance_km":19.952,"Value":3100.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":130.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":130.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":120.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":70.0}],"E_COLI_WATER":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":10.0},{"Station":"בית לאה","Distance_km":3.674,"Value":90.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":100.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":2500.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":2800.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":2400.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":1200.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":650.0},{"Station":"בני ברק","Distance_km":19.952,"Value":16000.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":680.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":920.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":640.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":250.0}],"NH3_AS_N":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.27},{"Station":"בית לאה","Distance_km":3.674,"Value":0.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":0.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":0.55},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":0.27},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":0.27},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":0.27},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":1.51},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":0.76},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":0.62},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":0.83},{"Station":"מרכז השייט","Distance_km":27.202,"Value":0.55}],"NH4_AS_N":[{"Station":"בני ברק","Distance_km":19.952,"Value":1.24}],"NO2-N":[{"Station":"בני ברק","Distance_km":19.952,"Value":0.0}],"NO2_AS_N":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.0},{"Station":"בית לאה","Distance_km":3.674,"Value":0.01},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":0.011},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":0.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":0.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":0.013},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":0.13},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":0.903},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":0.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":0.006},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":0.183},{"Station":"מרכז השייט","Distance_km":27.202,"Value":0.708}],"NO3_NAS_AS_N":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.53},{"Station":"בית לאה","Distance_km":3.674,"Value":0.51},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":0.55},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":3.65},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":2.99},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":4.42},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":3.74},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":4.19},{"Station":"בני ברק","Distance_km":19.952,"Value":7.79},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":5.49},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":5.77},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":6.51},{"Station":"מרכז השייט","Distance_km":27.202,"Value":6.17}],"TSS_105C":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.0},{"Station":"בית לאה","Distance_km":3.674,"Value":44.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":50.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":44.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":53.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":50.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":51.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":28.0},{"Station":"בני ברק","Distance_km":19.952,"Value":40.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":41.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":38.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":23.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":4.0}],"TSS_550C":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":0.0},{"Station":"בית לאה","Distance_km":3.674,"Value":39.0},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":25.0},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":21.0},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":27.0},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":25.0},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":40.0},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":18.0},{"Station":"בני ברק","Distance_km":19.952,"Value":40.0},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":15.0},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":12.0},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":3.0},{"Station":"מרכז השייט","Distance_km":27.202,"Value":0.0}],"Temperature":[{"Station":"בית לאה","Distance_km":3.674,"Value":22.5},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":19.4},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":18.9},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":19.2},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":19.5},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":19.5},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":19.9},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":19.2},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":18.6},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":19.8},{"Station":"מרכז השייט","Distance_km":27.202,"Value":19.5}],"pH":[{"Station":"גשר הרכבת","Distance_km":0.554,"Value":7.708},{"Station":"בית לאה","Distance_km":3.674,"Value":8.01},{"Station":"מעלה כניסת קנה","Distance_km":7.114,"Value":8.03},{"Station":"מורד כניסת קנה","Distance_km":7.13,"Value":8.139},{"Station":"מעלה כניסת הדר","Distance_km":8.29,"Value":8.18},{"Station":"מורד כניסת שילה","Distance_km":8.922,"Value":8.14},{"Station":"מעלה כביש 5","Distance_km":13.752,"Value":8.08},{"Station":"מורד כניסת מט''ש רמה''ש","Distance_km":15.272,"Value":8.04},{"Station":"מעלה 10 טחנות","Distance_km":20.35,"Value":8.07},{"Station":"מעלה 7 טחנות","Distance_km":23.772,"Value":8.09},{"Station":"מורד כניסת איילון","Distance_km":24.992,"Value":8.2},{"Station":"מרכז השייט","Distance_km":27.202,"Value":8.26}]}}};
+
+const PARAM_UNITS = {"BOD":"mg/L","COD":"mg/L","E_COLI_WATER":"cfu/100mL","ENTEROCOCCUS_WATER":"cfu/100mL","NH3_AS_N":"mg/L","NH4_AS_N":"mg/L","NO2_AS_N":"mg/L","NO2-N":"mg/L","NO3_NAS_AS_N":"mg/L","TSS_105C":"mg/L","TSS_550C":"mg/L","pH":"pH","EC":"µS/cm","DO_sat":"%","Temperature":"°C"};
+const PARAM_DESC = {"BOD":"ביקוש ביוכימי לחמצן","COD":"ביקוש כימי לחמצן","E_COLI_WATER":"חיידקי E. coli","ENTEROCOCCUS_WATER":"אנטרוקוקוס","NH3_AS_N":"אמוניה (NH₃-N)","NH4_AS_N":"אמוניום (NH₄-N)","NO2_AS_N":"ניטריט (NO₂-N)","NO2-N":"ניטריט — שדה","NO3_NAS_AS_N":"ניטראט (NO₃-N)","TSS_105C":"מוצקים מרחפים 105°C","TSS_550C":"מוצקים אורגניים 550°C","pH":"חומציות","EC":"מוליכות חשמלית","DO_sat":"רוויית חמצן מומס","Temperature":"טמפרטורה"};
+const DATE_INFO = {"all":"מציג ממוצע על פני שני תאריכי הדיגום — 22 ו-24 בפברואר 2026","2026-02-22":"סיור מלא: 13 תחנות לאורך כל הנהר, 13 פרמטרים — 22 בפברואר 2026","2026-02-24":"דיגום חוזר של תחנת בני ברק בלבד, 9 פרמטרים — 24 בפברואר 2026"};
+const DATE_PILL = {"all":"כל הנתונים · ממוצע","2026-02-22":"22/02/2026","2026-02-24":"24/02/2026"};
+
+let activeDate  = 'all';
+let activeParam = 'BOD';
+
+// ── INIT DATE TABS ────────────────────────────────────────────────────────────
+document.querySelectorAll('.date-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    activeDate = tab.dataset.date;
+    document.querySelectorAll('.date-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('date-info-text').textContent = DATE_INFO[activeDate];
+    // Auto-switch param if not available
+    const available = Object.keys(DATA.dates[activeDate]);
+    if (!available.includes(activeParam)) activeParam = available[0];
+    buildPicker();
+    render();
+  });
+});
+
+// ── PARAM PICKER ─────────────────────────────────────────────────────────────
+function buildPicker() {
+  const grid = document.getElementById('param-grid');
+  grid.innerHTML = '';
+  const available = Object.keys(DATA.dates[activeDate]);
+  const allParams = Object.keys(PARAM_UNITS);
+
+  allParams.forEach(p => {
+    const avail = available.includes(p);
+    const btn = document.createElement('button');
+    btn.className = 'param-btn' + (p === activeParam ? ' active' : '') + (avail ? '' : ' unavailable');
+    btn.dataset.param = p;
+    btn.innerHTML = `${p.replace(/_/g,' ')} <span class="unit">${PARAM_UNITS[p]||''}</span>`;
+    btn.title = avail ? PARAM_DESC[p]||p : 'לא זמין בתאריך זה';
+    if (avail) {
+      btn.addEventListener('click', () => {
+        activeParam = p;
+        document.querySelectorAll('.param-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        render();
+      });
+    }
+    grid.appendChild(btn);
+  });
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  const unit = PARAM_UNITS[activeParam] || '';
+  const rawPts = (DATA.dates[activeDate][activeParam] || [])
+    .filter(d => d.Distance_km != null)
+    .sort((a,b) => a.Distance_km - b.Distance_km);
+
+  document.getElementById('chart-title').textContent = activeParam.replace(/_/g,' ');
+  document.getElementById('chart-unit').textContent  = unit;
+  document.getElementById('chart-desc').textContent  = PARAM_DESC[activeParam] || '';
+  document.getElementById('chart-date-pill').textContent = DATE_PILL[activeDate];
+
+  drawChart(rawPts, unit);
+  drawStats(rawPts, unit);
+  drawList(rawPts, unit);
+}
+
+// ── CHART ─────────────────────────────────────────────────────────────────────
+function getColor(val, min, max) {
+  if (max === min) return '#00c4a7';
+  const t = (val - min) / (max - min);
+  if (t < 0.5) {
+    return `rgb(${Math.round(t*2*255)},${Math.round(196-t*2*60)},100)`;
+  }
+  return `rgb(255,${Math.round(136-(t-.5)*2*136)},50)`;
+}
+
+function fmtVal(v) {
+  if (v === null || v === undefined) return '—';
+  if (v >= 1000) return v.toLocaleString('en');
+  if (v % 1 === 0) return String(v);
+  return parseFloat(v.toFixed(3)).toString();
+}
+
+function drawChart(pts, unit) {
+  const svg = document.getElementById('river-chart');
+  svg.innerHTML = `<defs>
+    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00c4a7"/><stop offset="100%" stop-color="#0088ff"/>
+    </linearGradient>
+    <linearGradient id="areaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00c4a7" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#00c4a7" stop-opacity="0.02"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>`;
+
+  if (!pts.length) {
+    svg.innerHTML += `<text x="380" y="145" text-anchor="middle" fill="#64748b" font-family="Heebo" font-size="14">אין נתונים לפרמטר זה בתאריך הנבחר</text>`;
+    return;
+  }
+
+  const W=760, H=290, pL=54, pR=20, pT=18, pB=58;
+  const cW=W-pL-pR, cH=H-pT-pB;
+  const vals = pts.map(d=>d.Value);
+  const minV=Math.min(...vals), maxV=Math.max(...vals);
+  let lo = Math.max(0, minV-(maxV-minV)*.12);
+  let hi = maxV+(maxV-minV)*.15;
+  if (lo===hi) { lo=0; hi=hi*1.5||1; }
+
+  const xS = d => pL + (d.Distance_km/27.5)*cW;
+  const yS = v => pT + cH - ((v-lo)/(hi-lo))*cH;
+
+  // grid
+  for(let i=0;i<=5;i++){
+    const v=lo+(hi-lo)*i/5, y=yS(v);
+    svg.innerHTML += `<line class="grid-line" x1="${pL}" y1="${y}" x2="${W-pR}" y2="${y}"/>`;
+    const lbl = v>=1000?(v/1000).toFixed(1)+'k':parseFloat(v.toFixed(3)).toString();
+    svg.innerHTML += `<text class="axis-label" x="${pL-5}" y="${y+4}" text-anchor="end">${lbl}</text>`;
+  }
+  [0,5,10,15,20,25,27.2].forEach(km=>{
+    const x=pL+(km/27.5)*cW;
+    svg.innerHTML += `<line class="grid-line" x1="${x}" y1="${pT}" x2="${x}" y2="${pT+cH}" stroke-dasharray="3,5"/>`;
+    svg.innerHTML += `<text class="axis-label" x="${x}" y="${H-pB+13}" text-anchor="middle">${km}km</text>`;
+  });
+  svg.innerHTML += `<text class="axis-label" x="${pL-10}" y="${pT-5}" text-anchor="middle">${unit}</text>`;
+
+  if(pts.length>1){
+    const first=xS(pts[0]), last=xS(pts[pts.length-1]), bot=pT+cH;
+    const linePts=pts.map(d=>`${xS(d)},${yS(d.Value)}`).join(' L ');
+    svg.innerHTML += `<path class="area-fill" d="M ${first},${bot} L ${linePts} L ${last},${bot} Z"/>`;
+    svg.innerHTML += `<polyline class="river-line" points="${pts.map(d=>`${xS(d)},${yS(d.Value)}`).join(' ')}"/>`;
+  }
+
+  pts.forEach((d,i)=>{
+    const x=xS(d), y=yS(d.Value);
+    const col=getColor(d.Value,minV,maxV);
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    const circ=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circ.setAttribute('cx',x); circ.setAttribute('cy',y); circ.setAttribute('r',pts.length===1?8:5);
+    circ.setAttribute('class','station-dot'); circ.setAttribute('stroke',col);
+    circ.setAttribute('filter','url(#glow)');
+    g.appendChild(circ);
+    g.addEventListener('mouseenter', e=>showTT(e,d,unit));
+    g.addEventListener('mouseleave', hideTT);
+    svg.appendChild(g);
+
+    if(i%2===0 || pts.length<=6){
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('class','station-label');
+      t.setAttribute('x',x); t.setAttribute('y',pT+cH+30); t.setAttribute('text-anchor','middle');
+      t.setAttribute('transform',`rotate(-30,${x},${pT+cH+30})`);
+      t.textContent=d.Station.length>12?d.Station.slice(0,12)+'…':d.Station;
+      svg.appendChild(t);
+    }
+  });
+}
+
+function showTT(e,d,unit){
+  const tt=document.getElementById('tooltip');
+  const box=document.getElementById('chart-svg-container').getBoundingClientRect();
+  let lx=e.clientX-box.left+12, ly=e.clientY-box.top-24;
+  if(lx+170>box.width) lx=e.clientX-box.left-175;
+  document.getElementById('tt-name').textContent=d.Station;
+  document.getElementById('tt-val').textContent=`${fmtVal(d.Value)} ${unit}`;
+  document.getElementById('tt-km').textContent=`ק"מ ${d.Distance_km} מהמקור`;
+  document.getElementById('tt-date').textContent=DATE_PILL[activeDate];
+  tt.style.left=lx+'px'; tt.style.top=ly+'px';
+  tt.classList.add('show');
+}
+function hideTT(){ document.getElementById('tooltip').classList.remove('show'); }
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function drawStats(pts,unit){
+  const panel=document.getElementById('stats-panel');
+  panel.innerHTML='';
+  if(!pts.length){
+    panel.innerHTML=`<div class="stat-card"><div class="no-data">אין נתונים</div></div>`;
+    return;
+  }
+  const vals=pts.map(d=>d.Value);
+  const maxV=Math.max(...vals), minV=Math.min(...vals);
+  const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+  const maxPt=pts.find(d=>d.Value===maxV), minPt=pts.find(d=>d.Value===minV);
+  [
+    {label:'מקסימום',val:fmtVal(maxV),sub:maxPt?.Station,pct:100},
+    {label:'ממוצע',val:fmtVal(avg),sub:`${pts.length} תחנות`,pct:maxV>0?Math.round(avg/maxV*100):0},
+    {label:'מינימום',val:fmtVal(minV),sub:minPt?.Station,pct:maxV>0?Math.round(minV/maxV*100):0}
+  ].forEach(c=>{
+    const div=document.createElement('div');
+    div.className='stat-card';
+    div.innerHTML=`<div class="stat-label">${c.label}</div>
+      <div class="stat-value">${c.val} <span class="unit">${unit}</span></div>
+      <div class="stat-sub">${c.sub||''}</div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:${c.pct}%"></div></div>`;
+    panel.appendChild(div);
+  });
+}
+
+// ── LIST ──────────────────────────────────────────────────────────────────────
+function drawList(pts,unit){
+  const list=document.getElementById('stations-list');
+  const availCount=pts.length;
+  list.innerHTML=`<div class="list-header"><span>תחנות לאורך הנהר</span><span style="color:var(--accent)">${availCount} תחנות עם נתונים</span></div>`;
+
+  if(!pts.length){
+    list.innerHTML+=`<div class="no-data">אין נתונים לפרמטר זה בתאריך הנבחר</div>`;
+    return;
+  }
+  const vals=pts.map(d=>d.Value);
+  const maxV=Math.max(...vals), minV=Math.min(...vals);
+  const valMap={};
+  pts.forEach(d=>{ valMap[d.Station]=d.Value; });
+
+  DATA.stations.forEach(s=>{
+    const v=valMap[s.Station];
+    const row=document.createElement('div');
+    row.className='station-row';
+    const hasVal=v!==undefined;
+    const dotColor=hasVal?getColor(v,minV,maxV):'#1e2d45';
+    let valHtml;
+    if(!hasVal){
+      valHtml=`<span class="s-val absent">—</span>`;
+    } else {
+      const cls=(v===maxV&&maxV!==minV)?'high':(v===minV&&maxV!==minV)?'low':'';
+      valHtml=`<span class="s-val ${cls}">${fmtVal(v)} ${unit}</span>`;
+    }
+    row.innerHTML=`
+      <span class="s-order">${s.Order}</span>
+      <span class="s-dot" style="background:${dotColor}"></span>
+      <span class="s-name">${s.Station}</span>
+      <span class="s-km">${s.Distance_km}km</span>
+      ${valHtml}`;
+    list.appendChild(row);
+  });
+}
+
+// ── START ─────────────────────────────────────────────────────────────────────
+buildPicker();
+render();
+</script>
+</body>
+</html>
